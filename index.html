@@ -55,6 +55,9 @@ textarea{min-height:52px;}
 .iup img{width:100%;height:100%;object-fit:cover;border-radius:4px;}
 .iph{font-size:10px;color:#ccc;text-align:center;line-height:1.5;pointer-events:none;}
 .ior{font-size:10px;color:#ccc;text-align:center;margin-bottom:4px;}
+.img-wrap{position:relative;margin-bottom:5px;}
+.img-del{position:absolute;top:4px;right:4px;width:20px;height:20px;background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:50%;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;z-index:10;transition:background .15s;}
+.img-del:hover{background:#e44;}
 .badd{width:100%;padding:7px;border:1.5px dashed #ccc;border-radius:7px;background:transparent;font-size:11px;color:#999;cursor:pointer;font-family:inherit;transition:all .15s;}
 .badd:hover{border-color:var(--yb);color:#666;background:var(--ybl);}
 .swr{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;}
@@ -119,12 +122,15 @@ iframe#pv{width:600px;border:none;background:#fff;box-shadow:0 4px 28px rgba(0,0
     <div class="tp on" id="tab-basic">
       <div class="sec">
         <div class="slabel">히어로 이미지 <span>2번 박스</span></div>
-        <div class="iup" id="drop-hero" onclick="document.getElementById('f-hero').click()">
-          <div class="iph">클릭하여 이미지 업로드<br><span style="font-size:9px;color:#ddd;">권장: 600×300px</span></div>
-          <input type="file" id="f-hero" accept="image/*" style="display:none" onchange="onImgUpload(this,'drop-hero','_heroB64','heroUrl')">
+        <div class="img-wrap">
+          <div class="iup" id="drop-hero" onclick="document.getElementById('f-hero').click()">
+            <div class="iph">클릭하여 이미지 업로드<br><span style="font-size:9px;color:#ddd;">권장: 600×300px</span></div>
+            <input type="file" id="f-hero" accept="image/*" style="display:none" onchange="onImgUpload(this,'drop-hero','_heroB64','heroUrl')">
+          </div>
+          <button class="img-del" id="hero-del" onclick="clearHeroImg()" style="display:none" title="이미지 삭제">✕</button>
         </div>
         <div class="ior">또는 URL</div>
-        <input type="url" id="heroUrl" value="https://dimgcdn.ybtour.co.kr/TN/a9/a9f1772401edad7ee4c01b48aee61688.tn.410x280.jpg" oninput="_heroB64='';render()">
+        <input type="url" id="heroUrl" value="https://dimgcdn.ybtour.co.kr/TN/a9/a9f1772401edad7ee4c01b48aee61688.tn.410x280.jpg" oninput="_heroB64='';updateHeroDelBtn();render()">
       </div>
       <div class="sec">
         <div class="slabel">히어로 텍스트</div>
@@ -272,18 +278,57 @@ function switchTab(el){document.querySelectorAll('.tab').forEach(t=>t.classList.
 function toggleBonusSection(){const on=document.getElementById('showBonus').checked;document.getElementById('bonus-fields').classList.toggle('sec-disabled',!on);render();}
 function toggleShareSection(){const on=document.getElementById('showShare').checked;document.getElementById('share-fields').classList.toggle('sec-disabled',!on);render();}
 
-function onImgUpload(input,dropId,b64Key,urlId){const f=input.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{window[b64Key]=ev.target.result;document.getElementById(dropId).innerHTML=`<img src="${ev.target.result}">`;if(urlId)document.getElementById(urlId).value='';render();};r.readAsDataURL(f);}
-function onSpotImg(input,i){const f=input.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{spots[i].b64=ev.target.result;spots[i].url='';const d=document.getElementById('sdrop-'+i);if(d)d.innerHTML=`<img src="${ev.target.result}">`;const u=document.getElementById('surl-'+i);if(u)u.value='';render();};r.readAsDataURL(f);}
-function onProdImg(input,i){const f=input.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{prods[i].b64=ev.target.result;prods[i].url_img='';renderProds();render();};r.readAsDataURL(f);}
+function updateHeroDelBtn(){
+  const has=_heroB64||document.getElementById('heroUrl').value;
+  const btn=document.getElementById('hero-del');
+  if(btn) btn.style.display=has?'flex':'none';
+}
+function clearHeroImg(){
+  _heroB64='';
+  const drop=document.getElementById('drop-hero');
+  drop.innerHTML=`<div class="iph">클릭하여 이미지 업로드<br><span style="font-size:9px;color:#ddd;">권장: 600×300px</span></div><input type="file" id="f-hero" accept="image/*" style="display:none" onchange="onImgUpload(this,'drop-hero','_heroB64','heroUrl')">`;
+  document.getElementById('heroUrl').value='';
+  updateHeroDelBtn();
+  render();
+}
+function onImgUpload(input,dropId,b64Key,urlId){
+  const f=input.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    window[b64Key]=ev.target.result;
+    document.getElementById(dropId).innerHTML=`<img src="${ev.target.result}"><input type="file" id="f-${b64Key==='_heroB64'?'hero':dropId}" accept="image/*" style="display:none" onchange="onImgUpload(this,'${dropId}','${b64Key}','${urlId||''}')">`;
+    if(urlId) document.getElementById(urlId).value='';
+    if(b64Key==='_heroB64') updateHeroDelBtn();
+    render();
+  };
+  r.readAsDataURL(f);
+}
+function onSpotImg(input,i){
+  const f=input.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    spots[i].b64=ev.target.result;spots[i].url='';
+    renderSpots();render();
+  };
+  r.readAsDataURL(f);
+}
+function clearSpotImg(i){spots[i].b64='';spots[i].url='';renderSpots();render();}
+function onProdImg(input,i){
+  const f=input.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{prods[i].b64=ev.target.result;prods[i].url_img='';renderProds();render();};
+  r.readAsDataURL(f);
+}
+function clearProdImg(i){prods[i].b64='';prods[i].url_img='';renderProds();render();}
 
 function renderToc(){document.getElementById('toc-list').innerHTML=tocs.map((t,i)=>`<div style="display:flex;align-items:center;gap:5px;margin-bottom:5px;"><div style="width:18px;height:18px;background:#FFD200;border-radius:50%;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${String(i+1).padStart(2,'0')}</div><input type="text" value="${e(t)}" style="flex:1;margin-bottom:0;" oninput="tocs[${i}]=this.value;render()"><button class="bdel" onclick="tocs.splice(${i},1);renderToc();render()">✕</button></div>`).join('');}
 function addToc(){tocs.push('새 항목');renderToc();render();}
 
-function renderSpots(){document.getElementById('spot-list').innerHTML=spots.map((s,i)=>`<div class="card"><div class="card-hd"><div style="display:flex;align-items:center;gap:6px;"><div class="cnum">${i+1}</div><span style="font-size:11px;font-weight:600;color:#444;">${e(s.title||'여행지')}</span></div><div style="display:flex;gap:4px;"><button class="ctog" onclick="spots[${i}].open=!spots[${i}].open;renderSpots()">${s.open?'접기':'펼치기'}</button><button class="bdel" onclick="rmSpot(${i})">✕</button></div></div><div class="cbody ${s.open?'':'hide'}"><label>SPOT 라벨</label><input type="text" value="${e(s.lbl)}" oninput="spots[${i}].lbl=this.value;render()"><label>제목</label><input type="text" id="stitle-${i}" value="${e(s.title)}" oninput="spots[${i}].title=this.value;renderSpots();render()"><label>이미지 업로드</label><div class="iup" id="sdrop-${i}" onclick="document.getElementById('sf-${i}').click()">${s.b64?`<img src="${s.b64}">`:(s.url?`<img src="${e(s.url)}">`:`<div class="iph">클릭하여 업로드</div>`)}<input type="file" id="sf-${i}" accept="image/*" style="display:none" onchange="onSpotImg(this,${i})"></div><div class="ior">또는 URL</div><input type="url" id="surl-${i}" value="${e(s.url)}" placeholder="https://..." oninput="spots[${i}].url=this.value;spots[${i}].b64='';render()"><label>설명</label><textarea oninput="spots[${i}].desc=this.value;render()">${e(s.desc)}</textarea></div></div>`).join('');}
+function renderSpots(){document.getElementById('spot-list').innerHTML=spots.map((s,i)=>`<div class="card"><div class="card-hd"><div style="display:flex;align-items:center;gap:6px;"><div class="cnum">${i+1}</div><span style="font-size:11px;font-weight:600;color:#444;">${e(s.title||'여행지')}</span></div><div style="display:flex;gap:4px;"><button class="ctog" onclick="spots[${i}].open=!spots[${i}].open;renderSpots()">${s.open?'접기':'펼치기'}</button><button class="bdel" onclick="rmSpot(${i})">✕</button></div></div><div class="cbody ${s.open?'':'hide'}"><label>SPOT 라벨</label><input type="text" value="${e(s.lbl)}" oninput="spots[${i}].lbl=this.value;render()"><label>제목</label><input type="text" id="stitle-${i}" value="${e(s.title)}" oninput="spots[${i}].title=this.value;renderSpots();render()"><label>이미지 업로드</label><div class="img-wrap"><div class="iup" id="sdrop-${i}" onclick="document.getElementById('sf-${i}').click()">${s.b64?`<img src="${s.b64}">`:(s.url?`<img src="${e(s.url)}">`:`<div class="iph">클릭하여 업로드</div>`)}<input type="file" id="sf-${i}" accept="image/*" style="display:none" onchange="onSpotImg(this,${i})"></div>${(s.b64||s.url)?`<button class="img-del" onclick="clearSpotImg(${i})" title="이미지 삭제">✕</button>`:''}</div><div class="ior">또는 URL</div><input type="url" id="surl-${i}" value="${e(s.url)}" placeholder="https://..." oninput="spots[${i}].url=this.value;spots[${i}].b64='';renderSpots();render()"><label>설명</label><textarea oninput="spots[${i}].desc=this.value;render()">${e(s.desc)}</textarea></div></div>`).join('');}
 function rmSpot(i){if(spots.length<=1){toast('최소 1개는 있어야 해요');return;}spots.splice(i,1);renderSpots();render();}
 function addSpot(){if(spots.length>=6){toast('최대 6개');return;}spots.push({lbl:`SPOT ${spots.length+1}`,title:'새 여행지',b64:'',url:'',desc:'',open:true});renderSpots();render();}
 
-function renderProds(){document.getElementById('prod-list').innerHTML=prods.map((p,i)=>`<div class="card"><div class="card-hd"><span style="font-size:11px;font-weight:600;color:#444;">상품 ${i+1}</span><button class="bdel" onclick="prods.splice(${i},1);renderProds();render()">✕</button></div><label>이미지 업로드</label><div class="iup" onclick="document.getElementById('pf-${i}').click()">${p.b64?`<img src="${p.b64}">`:(p.url_img?`<img src="${e(p.url_img)}">`:`<div class="iph">클릭하여 업로드</div>`)}<input type="file" id="pf-${i}" accept="image/*" style="display:none" onchange="onProdImg(this,${i})"></div><div class="ior">또는 URL</div><input type="url" value="${e(p.url_img)}" placeholder="https://..." oninput="prods[${i}].url_img=this.value;prods[${i}].b64='';render()"><label>상품명</label><input type="text" value="${e(p.title)}" oninput="prods[${i}].title=this.value;render()"><label>해시태그</label><input type="text" value="${e(p.tags)}" oninput="prods[${i}].tags=this.value;render()"><label>상품 URL</label><input type="url" value="${e(p.url_link)}" oninput="prods[${i}].url_link=this.value;render()"></div>`).join('');}
+function renderProds(){document.getElementById('prod-list').innerHTML=prods.map((p,i)=>`<div class="card"><div class="card-hd"><span style="font-size:11px;font-weight:600;color:#444;">상품 ${i+1}</span><button class="bdel" onclick="prods.splice(${i},1);renderProds();render()">✕</button></div><label>이미지 업로드</label><div class="img-wrap"><div class="iup" onclick="document.getElementById('pf-${i}').click()">${p.b64?`<img src="${p.b64}">`:(p.url_img?`<img src="${e(p.url_img)}">`:`<div class="iph">클릭하여 업로드</div>`)}<input type="file" id="pf-${i}" accept="image/*" style="display:none" onchange="onProdImg(this,${i})"></div>${(p.b64||p.url_img)?`<button class="img-del" onclick="clearProdImg(${i})" title="이미지 삭제">✕</button>`:''}</div><div class="ior">또는 URL</div><input type="url" value="${e(p.url_img)}" placeholder="https://..." oninput="prods[${i}].url_img=this.value;prods[${i}].b64='';renderProds();render()"><label>상품명</label><input type="text" value="${e(p.title)}" oninput="prods[${i}].title=this.value;render()"><label>해시태그</label><input type="text" value="${e(p.tags)}" oninput="prods[${i}].tags=this.value;render()"><label>상품 URL</label><input type="url" value="${e(p.url_link)}" oninput="prods[${i}].url_link=this.value;render()"></div>`).join('');}
 function addProd(){if(prods.length>=4){toast('최대 4개');return;}prods.push({title:'새 상품',tags:'',b64:'',url_img:'',url_link:'#'});renderProds();render();}
 
 function renderTips(){document.getElementById('tip-list').innerHTML=tips.map((t,i)=>`<div class="card"><div class="card-hd"><span style="font-size:11px;font-weight:600;color:#444;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${e(t.title)}</span><button class="bdel" onclick="tips.splice(${i},1);renderTips();render()">✕</button></div><label>제목</label><input type="text" value="${e(t.title)}" oninput="tips[${i}].title=this.value;renderTips();render()"><label>내용</label><textarea oninput="tips[${i}].desc=this.value;render()">${e(t.desc)}</textarea><div class="r2"><div><label>링크 텍스트</label><input type="text" value="${e(t.lt)}" oninput="tips[${i}].lt=this.value;render()"></div><div><label>링크 URL</label><input type="url" value="${e(t.lu)}" oninput="tips[${i}].lu=this.value;render()"></div></div></div>`).join('');}
@@ -410,6 +455,7 @@ function toast(msg){const el=document.getElementById('toast');el.textContent=msg
 window.onload=()=>{
   renderToc();renderSpots();renderProds();renderTips();
   try{const draft=localStorage.getItem('yb_draft');if(draft){setState(JSON.parse(draft));}else{render();}}catch(ex){render();}
+  updateHeroDelBtn();
   if(location.hash.startsWith('#share='))loadFromHash();
   document.querySelectorAll('input,textarea,select').forEach(el=>{el.addEventListener('input',render);el.addEventListener('change',render);});
 };
