@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>노랑풍선 뉴스레터 생성기</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --yb:#FFD200; --ybl:#FFF6CC; --ybd:#9a7a00;
+  --bg:#F0EFEB; --panel:#FFF; --border:#E6E3DC;
+  --text:#1A1A1A; --sub:#888; --sw:380px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;display:flex;flex-direction:column;}
+.tb{height:50px;background:#111;display:flex;align-items:center;padding:0 16px;gap:12px;flex-shrink:0;}
+.tb-logo{color:var(--yb);font-weight:700;font-size:14px;display:flex;align-items:center;gap:6px;}
+.tb-logo i{width:9px;height:9px;background:var(--yb);border-radius:50%;display:inline-block;}
+.tb-div{width:1px;height:20px;background:#333;}
+.tb-title{color:#777;font-size:12px;flex:1;}
+.tbtn{padding:5px 14px;border-radius:18px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;border:none;transition:all .15s;}
+.tbtn-ghost{background:transparent;color:#aaa;border:1px solid #444;}
+.tbtn-ghost:hover{border-color:var(--yb);color:var(--yb);}
+.tbtn-yellow{background:var(--yb);color:#000;}
+.tbtn-yellow:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(255,210,0,.4);}
+.layout{display:flex;flex:1;overflow:hidden;}
+.sb{width:var(--sw);background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden;}
+.tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;}
+.tab{flex:1;padding:10px 0;font-size:11px;font-weight:600;color:var(--sub);text-align:center;cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;user-select:none;}
+.tab.on{color:#111;border-bottom-color:var(--yb);}
+.ps{flex:1;overflow-y:auto;padding:0;}
+.ps::-webkit-scrollbar{width:3px;}
+.ps::-webkit-scrollbar-thumb{background:#ddd;border-radius:2px;}
+.tp{display:none;}
+.tp.on{display:block;}
+.sec{padding:13px 15px;border-bottom:1px solid var(--border);}
+.slabel{font-size:10px;font-weight:700;color:#bbb;letter-spacing:.8px;text-transform:uppercase;margin-bottom:9px;display:flex;align-items:center;gap:5px;}
+.slabel span{background:var(--ybl);color:var(--ybd);border-radius:3px;padding:1px 5px;font-size:9px;}
+label{font-size:11px;color:#666;display:block;margin-bottom:3px;font-weight:500;}
+input[type=text],input[type=url],textarea,select{width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:5px;font-size:11px;font-family:inherit;color:var(--text);background:#fafafa;resize:vertical;margin-bottom:7px;transition:border-color .15s,box-shadow .15s;}
+input[type=text]:focus,input[type=url]:focus,textarea:focus{outline:none;border-color:var(--yb);box-shadow:0 0 0 3px rgba(255,210,0,.12);background:#fff;}
+textarea{min-height:52px;}
+.r2{display:flex;gap:7px;}.r2>div{flex:1;}
+.hint{font-size:10px;color:#bbb;margin:-4px 0 6px;line-height:1.5;}
+.card{background:#f9f8f5;border:1px solid var(--border);border-radius:7px;padding:10px;margin-bottom:7px;}
+.card-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.cnum{width:19px;height:19px;background:var(--yb);border-radius:50%;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+.ctog{font-size:10px;color:#bbb;border:1px solid var(--border);background:#fff;border-radius:3px;padding:1px 6px;cursor:pointer;user-select:none;}
+.ctog:hover{color:#666;}
+.cbody.hide{display:none;}
+.bdel{font-size:10px;color:#ccc;border:none;background:none;cursor:pointer;padding:2px;}
+.bdel:hover{color:#e44;}
+.iup{width:100%;height:65px;border:1.5px dashed #ccc;border-radius:5px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:#fafafa;margin-bottom:5px;position:relative;overflow:hidden;transition:border-color .15s;}
+.iup:hover{border-color:var(--yb);}
+.iup img{width:100%;height:100%;object-fit:cover;border-radius:4px;}
+.iph{font-size:10px;color:#ccc;text-align:center;line-height:1.5;pointer-events:none;}
+.ior{font-size:10px;color:#ccc;text-align:center;margin-bottom:4px;}
+.badd{width:100%;padding:7px;border:1.5px dashed #ccc;border-radius:7px;background:transparent;font-size:11px;color:#999;cursor:pointer;font-family:inherit;transition:all .15s;}
+.badd:hover{border-color:var(--yb);color:#666;background:var(--ybl);}
+.swr{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;}
+.swl{font-size:11px;color:#555;}
+.sw{position:relative;width:33px;height:18px;}
+.sw input{opacity:0;width:0;height:0;}
+.swt{position:absolute;inset:0;background:#ddd;border-radius:20px;cursor:pointer;transition:.2s;}
+.swt:before{content:'';position:absolute;width:12px;height:12px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s;}
+.sw input:checked+.swt{background:var(--yb);}
+.sw input:checked+.swt:before{transform:translateX(15px);}
+.sec-disabled{opacity:.45;pointer-events:none;}
+.pv{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.pvbar{height:38px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 14px;gap:7px;font-size:11px;color:#aaa;flex-shrink:0;}
+.pvdot{width:7px;height:7px;border-radius:50%;background:var(--yb);}
+.pvs{flex:1;overflow-y:auto;display:flex;justify-content:center;padding:20px;}
+iframe#pv{width:600px;border:none;background:#fff;box-shadow:0 4px 28px rgba(0,0,0,.1);border-radius:4px;}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;}
+.modal-bg.show{display:flex;}
+.modal{background:#fff;border-radius:12px;width:520px;max-height:80vh;display:flex;flex-direction:column;overflow:hidden;}
+.modal-hd{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.modal-hd h3{font-size:15px;font-weight:700;}
+.modal-close{background:none;border:none;font-size:18px;cursor:pointer;color:#aaa;line-height:1;}
+.modal-close:hover{color:#333;}
+.modal-body{flex:1;overflow-y:auto;padding:16px 18px;}
+.modal-ft{padding:12px 18px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+.arc-item{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#fafafa;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;}
+.arc-meta{font-size:11px;color:var(--sub);margin-top:3px;}
+.arc-title{font-size:13px;font-weight:600;}
+.arc-btns{display:flex;gap:6px;flex-shrink:0;}
+.arc-btn{padding:4px 10px;border-radius:14px;font-size:11px;font-weight:600;border:none;cursor:pointer;font-family:inherit;transition:all .15s;}
+.arc-btn-load{background:var(--yb);color:#000;}
+.arc-btn-del{background:#f0f0f0;color:#888;}
+.arc-btn-del:hover{background:#ffe4e4;color:#e44;}
+.share-url{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:7px;font-size:12px;font-family:monospace;color:#444;background:#fafafa;resize:none;height:80px;margin-bottom:10px;}
+.save-name{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;font-family:inherit;color:#333;background:#fafafa;}
+.save-name:focus{outline:none;border-color:var(--yb);}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(8px);background:#111;color:#fff;padding:8px 16px;border-radius:18px;font-size:12px;opacity:0;transition:all .3s;pointer-events:none;z-index:9999;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<div class="tb">
+  <div class="tb-logo"><i></i>노랑풍선</div>
+  <div class="tb-div"></div>
+  <span class="tb-title">뉴스레터 생성기</span>
+  <button class="tbtn tbtn-ghost" onclick="openArchive()">📁 아카이브</button>
+  <button class="tbtn tbtn-ghost" onclick="openSave()">💾 저장</button>
+  <button class="tbtn tbtn-ghost" onclick="openShare()">🔗 시안 공유</button>
+  <button class="tbtn tbtn-ghost" onclick="copyHTML()">HTML 복사</button>
+  <button class="tbtn tbtn-yellow" onclick="downloadHTML()">다운로드</button>
+</div>
+<div class="layout">
+<div class="sb">
+  <div class="tabs">
+    <div class="tab on" data-tab="basic" onclick="switchTab(this)">기본</div>
+    <div class="tab" data-tab="spots" onclick="switchTab(this)">여행지</div>
+    <div class="tab" data-tab="products" onclick="switchTab(this)">상품</div>
+    <div class="tab" data-tab="tips" onclick="switchTab(this)">꿀팁</div>
+    <div class="tab" data-tab="extra" onclick="switchTab(this)">기타</div>
+  </div>
+  <div class="ps">
+    <div class="tp on" id="tab-basic">
+      <div class="sec">
+        <div class="slabel">히어로 이미지 <span>2번 박스</span></div>
+        <div class="iup" id="drop-hero" onclick="document.getElementById('f-hero').click()">
+          <div class="iph">클릭하여 이미지 업로드<br><span style="font-size:9px;color:#ddd;">권장: 600×300px</span></div>
+          <input type="file" id="f-hero" accept="image/*" style="display:none" onchange="onImgUpload(this,'drop-hero','_heroB64','heroUrl')">
+        </div>
+        <div class="ior">또는 URL</div>
+        <input type="url" id="heroUrl" value="https://dimgcdn.ybtour.co.kr/TN/a9/a9f1772401edad7ee4c01b48aee61688.tn.410x280.jpg" oninput="_heroB64='';render()">
+      </div>
+      <div class="sec">
+        <div class="slabel">히어로 텍스트</div>
+        <label>제목</label>
+        <textarea id="heroTitle" oninput="render()">왕사남 1,200만 돌파!
+단종의 도시, 영월로 떠나볼까요?</textarea>
+        <label>본문</label>
+        <textarea id="heroBody" oninput="render()">영화 '왕과 사는 남자'가 1,300만 관객을 돌파하며 25번째 한국 천만 영화에 이름을 올렸어요.
+"유배지가 되면, 마을이 흥한다." 약 570년이 지난 지금, 영월은 다시 사람들로 붐비고 있답니다.
+오늘 레터에서는 영월 여행 코스 5곳부터 에디터의 영월 여행 꿀팁까지 총정리해 드릴게요!</textarea>
+        <label>발행일</label>
+        <input type="text" id="issueDate" value="2026.03" oninput="render()">
+      </div>
+      <div class="sec">
+        <div class="slabel">TODAY'S LETTER 목차</div>
+        <div id="toc-list"></div>
+        <button class="badd" onclick="addToc()">+ 항목 추가</button>
+      </div>
+      <div class="sec">
+        <div class="slabel">섹션 제목</div>
+        <label>01 여행지</label><input type="text" id="s1t" value="영월 여행 코스 5곳" oninput="render()">
+        <label>01 부제</label>
+        <textarea id="s1d" oninput="render()">당일치기로 다녀오기 좋은 영월, 제대로 알아볼까요?
+단종의 발자취를 따라가는 역사 여행 코스를 소개합니다.</textarea>
+        <label>02 상품</label><input type="text" id="s2t" value="노랑풍선과 함께하는 영월 여행" oninput="render()">
+        <label>03 꿀팁</label><input type="text" id="s3t" value="에디터의 여행 꿀팁" oninput="render()">
+        <label>04 테스트</label><input type="text" id="s4t" value="왕사남 캐릭터 테스트" oninput="render()">
+      </div>
+    </div>
+    <div class="tp" id="tab-spots">
+      <div class="sec">
+        <div class="slabel">여행지 블록 <span>최대 6개</span></div>
+        <div id="spot-list"></div>
+        <button class="badd" onclick="addSpot()">+ 여행지 추가</button>
+      </div>
+    </div>
+    <div class="tp" id="tab-products">
+      <div class="sec">
+        <div class="slabel">상품 카드 <span>최대 4개</span></div>
+        <div id="prod-list"></div>
+        <button class="badd" onclick="addProd()">+ 상품 추가</button>
+      </div>
+    </div>
+    <div class="tp" id="tab-tips">
+      <div class="sec">
+        <div class="slabel">꿀팁 항목 <span>최대 6개</span></div>
+        <div id="tip-list"></div>
+        <button class="badd" onclick="addTip()">+ 꿀팁 추가</button>
+      </div>
+    </div>
+    <div class="tp" id="tab-extra">
+      <div class="sec">
+        <div class="slabel">BONUS CORNER</div>
+        <div class="swr"><span class="swl">섹션 표시</span><label class="sw"><input type="checkbox" id="showBonus" checked onchange="toggleBonusSection()"><span class="swt"></span></label></div>
+        <div id="bonus-fields">
+          <label>섹션 제목 (04)</label><input type="text" id="bonusSecTitle" value="왕사남 캐릭터 테스트" oninput="render()">
+          <label>카드 내 제목</label><input type="text" id="bonusTitle" value="내가 왕과 사는 남자 영화 속 주인공이라면?" oninput="render()">
+          <label>설명</label>
+          <textarea id="bonusDesc" oninput="render()">가볍게 해보기 좋은 캐릭터 테스트!
+당신은 어떤 인물이 나올까요?</textarea>
+          <label>버튼 텍스트</label><input type="text" id="bonusBtnTxt" value="테스트 하러 가기" oninput="render()">
+          <label>버튼 URL</label><input type="url" id="bonusBtnUrl" value="https://the-kings-warden2.vercel.app/" oninput="render()">
+        </div>
+      </div>
+      <div class="sec">
+        <div class="slabel">공유 섹션</div>
+        <div class="swr"><span class="swl">섹션 표시</span><label class="sw"><input type="checkbox" id="showShare" checked onchange="toggleShareSection()"><span class="swt"></span></label></div>
+        <div id="share-fields">
+          <label>공유 문구</label>
+          <textarea id="shareTxt" oninput="render()">여행 좋아하는 사람이라면,
+그냥 지나치기 힘든 노랑풍선 뉴스레터예요.
+노랑풍선 MZ 사원들이 트렌디하게 소식을 전합니다!
+이 뉴스레터가 마음에 드셨다면?</textarea>
+          <div class="swr"><span class="swl">공유하기 버튼 표시</span><label class="sw"><input type="checkbox" id="showShareBtn" checked onchange="render()"><span class="swt"></span></label></div>
+          <label>버튼 클릭 시 복사될 URL</label>
+          <input type="url" id="shareUrl" value="https://www.ybtour.co.kr" oninput="render()">
+          <p class="hint">버튼 클릭 시 이 URL이 클립보드에 복사됩니다.</p>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="slabel">푸터</div>
+        <label>발행 기준 날짜</label><input type="text" id="footerDate" value="2026.04" oninput="render()">
+      </div>
+    </div>
+  </div>
+</div>
+<div class="pv">
+  <div class="pvbar">
+    <div class="pvdot"></div>실시간 미리보기 · 600px
+    <span id="auto-saved" style="margin-left:auto;font-size:10px;color:#bbb;display:none;">자동저장됨</span>
+  </div>
+  <div class="pvs"><iframe id="pv" sandbox="allow-same-origin allow-scripts allow-popups allow-forms"></iframe></div>
+</div>
+</div>
+
+<div class="modal-bg" id="modal-save">
+  <div class="modal" style="width:400px;">
+    <div class="modal-hd"><h3>시안 저장</h3><button class="modal-close" onclick="closeModal('modal-save')">×</button></div>
+    <div class="modal-body"><label style="font-size:12px;color:#555;display:block;margin-bottom:6px;">저장 이름</label><input class="save-name" type="text" id="save-name" placeholder="예: Vol.02 왕사남 영월 편 v1"></div>
+    <div class="modal-ft"><button class="tbtn tbtn-ghost" onclick="closeModal('modal-save')">취소</button><button class="tbtn tbtn-yellow" onclick="saveToArchive()">저장</button></div>
+  </div>
+</div>
+<div class="modal-bg" id="modal-archive">
+  <div class="modal">
+    <div class="modal-hd"><h3>저장된 시안 목록</h3><button class="modal-close" onclick="closeModal('modal-archive')">×</button></div>
+    <div class="modal-body" id="archive-body"><p style="font-size:13px;color:#aaa;text-align:center;padding:30px 0;">저장된 시안이 없어요.</p></div>
+    <div class="modal-ft"><button class="tbtn tbtn-ghost" onclick="closeModal('modal-archive')">닫기</button></div>
+  </div>
+</div>
+<div class="modal-bg" id="modal-share">
+  <div class="modal">
+    <div class="modal-hd"><h3>시안 공유</h3><button class="modal-close" onclick="closeModal('modal-share')">×</button></div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:#555;margin-bottom:12px;line-height:1.6;">아래 URL을 복사해서 공유하면, 받는 사람이 동일한 시안을 바로 확인할 수 있어요.<br><span style="font-size:11px;color:#aaa;">※ 이미지 파일로 업로드한 경우 공유 링크에 포함되지 않을 수 있어요.</span></p>
+      <textarea class="share-url" id="share-url-txt" readonly onclick="this.select()"></textarea>
+      <button class="tbtn tbtn-yellow" style="width:100%;" onclick="copyShareUrl()">🔗 URL 복사하기</button>
+    </div>
+    <div class="modal-ft"><button class="tbtn tbtn-ghost" onclick="closeModal('modal-share')">닫기</button></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+let _heroB64='';
+let tocs=['영월 대표 여행지 5곳','노랑풍선과 함께하는 영월 여행','에디터의 여행 꿀팁','왕사남 캐릭터 테스트'];
+let spots=[
+  {lbl:'SPOT 1',title:'청령포',b64:'',url:'https://cdn.pixabay.com/photo/2020/05/01/07/04/cheongnyeongpo-5117379_1280.jpg',desc:'단종이 유배 생활을 했던 곳. 삼면이 강으로 둘러싸이고 뒤로는 절벽이 막혀 있어 섬과 다름없는 지형이에요. 입구에서 작은 배를 타고 강을 건너야만 들어갈 수 있는데, 그 짧은 몇 분이 생각보다 특별하게 느껴져요. 울창한 소나무 숲 사이를 걷다 보면 단종이 정순왕후를 그리며 쌓아 올렸다는 망향탑과, 수령 600년의 관음송도 만날 수 있어요.',open:true},
+  {lbl:'SPOT 2',title:'장릉',b64:'',url:'https://cdn.pixabay.com/photo/2019/07/25/05/08/jangneung-4361741_1280.jpg',desc:'조선 6대 왕 단종이 잠들어 있는 곳이자 유네스코 세계문화유산으로 지정된 왕릉이에요. 사약을 받고 세상을 떠난 단종의 시신을 목숨을 걸고 수습한 영월 호장 엄흥도가 암매장한 자리에 조성된 능이에요. 능으로 오르는 길 양쪽 소나무들이 능을 향해 절하듯 굽어 있어, 괜히 마음이 숙연해지는 곳이에요.',open:false},
+  {lbl:'SPOT 3',title:'관풍헌',b64:'',url:'https://cdn.pixabay.com/photo/2020/10/20/14/55/gwanpungheon-5671013_1280.jpg',desc:'영월 유배 당시 단종이 잠시 머물렀던 관아. 왕의 자리에서 내려온 뒤, 이곳에서 외로운 시간을 보냈다고 합니다.',open:false},
+  {lbl:'SPOT 4',title:'선돌',b64:'',url:'https://cdn.pixabay.com/photo/2019/08/12/03/07/seondol-4399927_1280.jpg',desc:'영월을 대표하는 절경 명소. 한반도 지형을 내려다보는 기암 절벽으로, 영월에 왔다면 꼭 한 번 들려볼 전망 포인트예요.',open:false},
+  {lbl:'SPOT 5',title:'동막골 세트장',b64:'',url:'https://cdn.pixabay.com/photo/2018/10/15/14/06/dongmakgol-3749757_1280.jpg',desc:"영화 '웰컴 투 동막골'의 촬영지로도 유명한 곳. 평창에 있지만 영월에서 가까워 같이 방문하기 좋아요!",open:false},
+];
+let prods=[
+  {title:'영월 1일 투어',tags:'#청령포 #장릉 #선돌 #동막골세트장',b64:'',url_img:'https://dimgcdn.ybtour.co.kr/TN/c3/c30aaeb112288e71e5a9f15fd4a44127.tn.410x280.png',url_link:'https://prdt.ybtour.co.kr/product/detailPackage?menu=DMT&dspSid=ADBJ001&evCd=KIP1014-2604249900'},
+  {title:'동해/태백/영월 2일',tags:'#웰니스여행 #태백산전망대 #청령포',b64:'',url_img:'https://dimgcdn.ybtour.co.kr/TN/03/03815054c089ca312b81e78ed7780ff9.tn.410x280.png',url_link:'https://prdt.ybtour.co.kr/product/detailPackage?menu=DMT&dspSid=ADBF001&evCd=KIP1123-2604249900'},
+];
+let tips=[
+  {title:'제59회 영월 단종문화제 (4/24~26)',desc:'매년 4월 영월에서 단종을 기리는 문화제가 열려요. 제례와 공연, 체험 프로그램을 통해 단종의 이야기를 가까이서 만날 수 있어요. 올해는 행사 개막일에 장항준 감독 방문 예정!',lt:'자세히 보기',lu:'https://danjong.ywfestival.com/danjong'},
+  {title:'열차 100% 할인 쿠폰',desc:"'2026 여행가는 달' 맞이 4·5월 인구감소지역(영월 포함) 자유여행 시 열차운임 100% 할인쿠폰 지급! 관광지 QR 코드로 방문 인증하면 돼요.",lt:'자세히 보기',lu:'https://info.korail.com/info/selectBbsNttView.do?key=911&bbsNo=199&nttNo=26368'},
+  {title:'여행경비 50% 환급',desc:"'지역사랑 휴가지원' 사업으로 영월 여행 시 여행경비의 50%를 모바일 지역사랑상품권으로 환급! 개인 최대 10만 원, 2인 이상 최대 20만 원.",lt:'자세히 보기',lu:'https://korean.visitkorea.or.kr/notice/news_detail.do?nwsid=76eba13b-bb69-4800-b1ce-9ffe01eed6b5'},
+  {title:'자매도시 거주자 입장료 50% 할인',desc:'영월군 자매결연 도시 거주자는 영월 주요 관광지 입장료를 50% 할인받을 수 있어요. 지역구 확인 가능한 신분증 꼭 챙겨가세요!',lt:'자매도시 확인하기 / 할인 관광지 확인하기',lu:'https://www.yw.go.kr/www/contents.do?key=525'},
+];
+
+function switchTab(el){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));document.querySelectorAll('.tp').forEach(p=>p.classList.remove('on'));el.classList.add('on');document.getElementById('tab-'+el.dataset.tab).classList.add('on');}
+function toggleBonusSection(){const on=document.getElementById('showBonus').checked;document.getElementById('bonus-fields').classList.toggle('sec-disabled',!on);render();}
+function toggleShareSection(){const on=document.getElementById('showShare').checked;document.getElementById('share-fields').classList.toggle('sec-disabled',!on);render();}
+
+function onImgUpload(input,dropId,b64Key,urlId){const f=input.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{window[b64Key]=ev.target.result;document.getElementById(dropId).innerHTML=`<img src="${ev.target.result}">`;if(urlId)document.getElementById(urlId).value='';render();};r.readAsDataURL(f);}
+function onSpotImg(input,i){const f=input.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{spots[i].b64=ev.target.result;spots[i].url='';const d=document.getElementById('sdrop-'+i);if(d)d.innerHTML=`<img src="${ev.target.result}">`;const u=document.getElementById('surl-'+i);if(u)u.value='';render();};r.readAsDataURL(f);}
+function onProdImg(input,i){const f=input.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{prods[i].b64=ev.target.result;prods[i].url_img='';renderProds();render();};r.readAsDataURL(f);}
+
+function renderToc(){document.getElementById('toc-list').innerHTML=tocs.map((t,i)=>`<div style="display:flex;align-items:center;gap:5px;margin-bottom:5px;"><div style="width:18px;height:18px;background:#FFD200;border-radius:50%;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${String(i+1).padStart(2,'0')}</div><input type="text" value="${e(t)}" style="flex:1;margin-bottom:0;" oninput="tocs[${i}]=this.value;render()"><button class="bdel" onclick="tocs.splice(${i},1);renderToc();render()">✕</button></div>`).join('');}
+function addToc(){tocs.push('새 항목');renderToc();render();}
+
+function renderSpots(){document.getElementById('spot-list').innerHTML=spots.map((s,i)=>`<div class="card"><div class="card-hd"><div style="display:flex;align-items:center;gap:6px;"><div class="cnum">${i+1}</div><span style="font-size:11px;font-weight:600;color:#444;">${e(s.title||'여행지')}</span></div><div style="display:flex;gap:4px;"><button class="ctog" onclick="spots[${i}].open=!spots[${i}].open;renderSpots()">${s.open?'접기':'펼치기'}</button><button class="bdel" onclick="rmSpot(${i})">✕</button></div></div><div class="cbody ${s.open?'':'hide'}"><label>SPOT 라벨</label><input type="text" value="${e(s.lbl)}" oninput="spots[${i}].lbl=this.value;render()"><label>제목</label><input type="text" id="stitle-${i}" value="${e(s.title)}" oninput="spots[${i}].title=this.value;renderSpots();render()"><label>이미지 업로드</label><div class="iup" id="sdrop-${i}" onclick="document.getElementById('sf-${i}').click()">${s.b64?`<img src="${s.b64}">`:(s.url?`<img src="${e(s.url)}">`:`<div class="iph">클릭하여 업로드</div>`)}<input type="file" id="sf-${i}" accept="image/*" style="display:none" onchange="onSpotImg(this,${i})"></div><div class="ior">또는 URL</div><input type="url" id="surl-${i}" value="${e(s.url)}" placeholder="https://..." oninput="spots[${i}].url=this.value;spots[${i}].b64='';render()"><label>설명</label><textarea oninput="spots[${i}].desc=this.value;render()">${e(s.desc)}</textarea></div></div>`).join('');}
+function rmSpot(i){if(spots.length<=1){toast('최소 1개는 있어야 해요');return;}spots.splice(i,1);renderSpots();render();}
+function addSpot(){if(spots.length>=6){toast('최대 6개');return;}spots.push({lbl:`SPOT ${spots.length+1}`,title:'새 여행지',b64:'',url:'',desc:'',open:true});renderSpots();render();}
+
+function renderProds(){document.getElementById('prod-list').innerHTML=prods.map((p,i)=>`<div class="card"><div class="card-hd"><span style="font-size:11px;font-weight:600;color:#444;">상품 ${i+1}</span><button class="bdel" onclick="prods.splice(${i},1);renderProds();render()">✕</button></div><label>이미지 업로드</label><div class="iup" onclick="document.getElementById('pf-${i}').click()">${p.b64?`<img src="${p.b64}">`:(p.url_img?`<img src="${e(p.url_img)}">`:`<div class="iph">클릭하여 업로드</div>`)}<input type="file" id="pf-${i}" accept="image/*" style="display:none" onchange="onProdImg(this,${i})"></div><div class="ior">또는 URL</div><input type="url" value="${e(p.url_img)}" placeholder="https://..." oninput="prods[${i}].url_img=this.value;prods[${i}].b64='';render()"><label>상품명</label><input type="text" value="${e(p.title)}" oninput="prods[${i}].title=this.value;render()"><label>해시태그</label><input type="text" value="${e(p.tags)}" oninput="prods[${i}].tags=this.value;render()"><label>상품 URL</label><input type="url" value="${e(p.url_link)}" oninput="prods[${i}].url_link=this.value;render()"></div>`).join('');}
+function addProd(){if(prods.length>=4){toast('최대 4개');return;}prods.push({title:'새 상품',tags:'',b64:'',url_img:'',url_link:'#'});renderProds();render();}
+
+function renderTips(){document.getElementById('tip-list').innerHTML=tips.map((t,i)=>`<div class="card"><div class="card-hd"><span style="font-size:11px;font-weight:600;color:#444;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${e(t.title)}</span><button class="bdel" onclick="tips.splice(${i},1);renderTips();render()">✕</button></div><label>제목</label><input type="text" value="${e(t.title)}" oninput="tips[${i}].title=this.value;renderTips();render()"><label>내용</label><textarea oninput="tips[${i}].desc=this.value;render()">${e(t.desc)}</textarea><div class="r2"><div><label>링크 텍스트</label><input type="text" value="${e(t.lt)}" oninput="tips[${i}].lt=this.value;render()"></div><div><label>링크 URL</label><input type="url" value="${e(t.lu)}" oninput="tips[${i}].lu=this.value;render()"></div></div></div>`).join('');}
+function addTip(){if(tips.length>=6){toast('최대 6개');return;}tips.push({title:'새 꿀팁',desc:'',lt:'자세히 보기',lu:'#'});renderTips();render();}
+
+function v(id){return(document.getElementById(id)||{}).value||'';}
+function e(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function nb(s){return String(s||'').replace(/\n/g,'<br>');}
+
+function buildHTML(){
+  const heroImg=_heroB64||v('heroUrl');
+  const heroImgRow=heroImg?`\n  <tr><td style="padding:20px;" class="mobile-pad"><img src="${heroImg}" alt="노랑풍선 뉴스레터 이미지" width="560" class="content-img" style="display:block;width:100%;border-radius:10px;"></td></tr>`:'' ;
+  const tocRows=[];
+  for(let i=0;i<tocs.length;i+=2){tocRows.push(`          <tr><td class="toc-item" style="font-size:13px;color:#444;padding:3px 0;"><span style="color:#ffd200;font-weight:700;">${String(i+1).padStart(2,'0')}</span>&nbsp; ${e(tocs[i])}</td><td class="toc-item" style="font-size:13px;color:#444;padding:3px 0;">${tocs[i+1]?`<span style="color:#ffd200;font-weight:700;">${String(i+2).padStart(2,'0')}</span>&nbsp; ${e(tocs[i+1])}`:''}</td></tr>`);}
+  const spotsHTML=spots.map((s,i)=>{const img=s.b64||s.url;const pad=i===0?'24px 20px 0':'16px 20px 0';return `\n  <tr><td style="padding:${pad};" class="mobile-pad"><table width="100%" cellpadding="0" cellspacing="0" style="border-radius:12px;overflow:hidden;border:1px solid #f0f0ea;"><tr><td>${img?`<img src="${img}" alt="${e(s.title)}" width="560" class="content-img" style="display:block;width:100%;border-radius:12px 12px 0 0;">`:`<div style="height:200px;background:#f5f5f0;border-radius:12px 12px 0 0;"></div>`}</td></tr><tr><td style="padding:18px 20px 22px;"><span style="display:inline-block;background:#ffd200;color:#222;font-size:11px;font-weight:700;padding:3px 10px;border-radius:12px;margin-bottom:8px;">${e(s.lbl)}</span><strong style="font-size:17px;color:#222;display:block;margin:8px 0 10px;">${e(s.title)}</strong><span style="font-size:14px;color:#555;line-height:1.75;display:block;margin-bottom:4px;">${e(s.desc)}</span></td></tr></table></td></tr>`;}).join('');
+  const prodChunks=[];for(let i=0;i<prods.length;i+=2)prodChunks.push(prods.slice(i,i+2));
+  const prodsHTML=prodChunks.map(chunk=>`\n      <tr>${chunk.map((p,ci)=>{const img=p.b64||p.url_img;return `<td width="50%" valign="top" class="product-col" style="${ci===0?'padding-right:6px;':'padding-left:6px;'}"><a href="${e(p.url_link)}" target="_blank" style="text-decoration:none;color:#222;display:block;"><table width="100%" cellpadding="0" cellspacing="0" style="border-radius:12px;overflow:hidden;border:1px solid #efefea;"><tr><td style="line-height:0;font-size:0;">${img?`<img src="${img}" alt="${e(p.title)}" width="100%" style="display:block;width:100%;border-radius:12px 12px 0 0;">`:`<div style="height:140px;background:#f5f5f0;border-radius:12px 12px 0 0;"></div>`}</td></tr><tr><td style="padding:14px 14px 16px;background:#fff;"><strong style="font-size:14px;color:#222;display:block;margin-bottom:5px;line-height:1.4;">${e(p.title)}</strong><span style="font-size:12px;color:#888;line-height:1.5;display:block;margin-bottom:12px;">${e(p.tags)}</span><span style="display:inline-block;padding:7px 18px;background:#222;color:#fff;font-size:12px;font-weight:600;border-radius:20px;">상품 보기 →</span></td></tr></table></a></td>`;}).join('')}${chunk.length===1?'<td width="50%"></td>':''}</tr>\n      <tr><td colspan="2" height="12"></td></tr>`).join('');
+  const tipsHTML=tips.map((t,i)=>`\n    <tr><td style="padding:14px 16px;background:#FAFAF7;border-radius:8px;"><table width="100%" cellpadding="0" cellspacing="0"><tr><td width="20" valign="top" style="padding-right:10px;padding-top:4px;"><div style="width:8px;height:8px;background:#ffd200;border-radius:50%;margin-top:3px;"></div></td><td><strong style="font-size:14px;color:#222;display:block;margin-bottom:4px;">${e(t.title)}</strong><span style="font-size:13px;color:#666;line-height:1.65;">${e(t.desc)}</span><br>${t.lu?`<a href="${e(t.lu)}" target="_blank" style="display:inline-block;margin-top:6px;font-size:12px;color:#9a7a00;font-weight:600;text-decoration:underline;">${e(t.lt)} →</a>`:''}</td></tr></table></td></tr>${i<tips.length-1?'\n    <tr><td height="8"></td></tr>':''}`).join('');
+  const showBonus=document.getElementById('showBonus')?.checked;
+  const bonusHTML=showBonus?`\n  <tr><td style="padding:40px 24px 8px;" class="mobile-pad"><p style="margin:0 0 4px;font-size:11px;font-weight:700;color:#ffd200;letter-spacing:1px;">04</p><h2 style="margin:0;font-size:19px;color:#111;font-weight:700;">${e(v('bonusSecTitle'))}</h2></td></tr>\n  <tr><td style="padding:16px 20px 32px;" class="mobile-pad"><table width="100%" cellpadding="0" cellspacing="0" style="background:#FAFAF7;border-radius:12px;"><tr><td style="padding:24px;text-align:center;"><p style="margin:0 0 10px;font-size:11px;font-weight:700;color:#7a5c00;letter-spacing:.8px;">BONUS CORNER</p><strong style="font-size:14px;color:#111;display:block;margin-bottom:10px;">${e(v('bonusTitle'))}</strong><span style="font-size:13px;color:#333;line-height:1.65;display:block;margin-bottom:20px;">${nb(e(v('bonusDesc')))}</span><a href="${e(v('bonusBtnUrl'))}" target="_blank" style="display:inline-block;padding:14px 36px;background:#7a5c00;color:#fff;font-weight:500;text-decoration:none;border-radius:24px;font-size:13px;">${e(v('bonusBtnTxt'))}</a></td></tr></table></td></tr>`:'';
+  const showShare=document.getElementById('showShare')?.checked;
+  const showShareBtn=document.getElementById('showShareBtn')?.checked;
+  const suv=e(v('shareUrl')||'https://www.ybtour.co.kr');
+  const shareHTML=showShare?`\n  <tr><td style="padding:${showBonus?'0':'32px'} 20px 32px;" class="mobile-pad"><table width="100%" cellpadding="0" cellspacing="0" style="background:#fff6cc;border-radius:12px;"><tr><td style="padding:28px 24px;text-align:center;"><p style="margin:0${showShareBtn?' 0 16px':' 0'};font-size:13px;color:#555;line-height:1.9;">${nb(e(v('shareTxt')))}</p>${showShareBtn?`<a href="#" onclick="(function(btn){var t=document.createElement('textarea');t.value='${suv}';document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);var orig=btn.innerHTML;btn.innerHTML='링크 복사됨!';setTimeout(function(){btn.innerHTML=orig;},2000);})(this);return false;" style="display:inline-block;padding:12px 28px;background:#ffd200;color:#111;font-weight:600;text-decoration:none;border-radius:24px;font-size:13px;">♥ 친구에게 공유하기 ♥</a>`:''}</td></tr></table></td></tr>`:'';
+
+  return `<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>노랑풍선 뉴스레터</title>
+<style>
+  @media only screen and (max-width:480px){
+    .email-wrap{width:100%!important;}
+    .hero-title{font-size:22px!important;}
+    .content-img{width:100%!important;height:auto!important;}
+    .mobile-pad{padding-left:16px!important;padding-right:16px!important;}
+    .toc-item{display:block!important;padding:6px 0!important;}
+    .product-col{display:block!important;width:100%!important;padding:0 0 16px 0!important;}
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#ffffff;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff;">
+<tr><td align="center" style="padding:0;">
+<table width="600" cellpadding="0" cellspacing="0" class="email-wrap" style="background:#fff;font-family:'돋움',Dotum,Arial,sans-serif;max-width:600px;">
+  <tr><td style="padding:16px 20px;"><table width="100%" cellpadding="0" cellspacing="0"><tr>
+    <td><a href="https://www.ybtour.co.kr" target="_blank"><img src="https://static.ybtour.com/images/mail/yblogo_header.png" alt="노랑풍선" height="40" style="display:block;"></a></td>
+    <td align="right" style="font-size:11px;color:#999;">${e(v('issueDate'))}</td>
+  </tr></table></td></tr>
+  <tr><td height="4" style="background:linear-gradient(90deg,#ffd200,#ffb800);font-size:0;line-height:0;">&nbsp;</td></tr>
+  <tr><td style="background:#fff6cc;padding:36px 24px 28px;" class="mobile-pad">
+    <p style="margin:0 0 8px;font-size:11px;font-weight:700;color:#9a7a00;letter-spacing:1.5px;text-transform:uppercase;">YBTOUR TREND LETTER</p>
+    <h1 class="hero-title" style="margin:0 0 12px;font-size:26px;font-weight:700;color:#111;line-height:1.35;">${nb(e(v('heroTitle')))}</h1>
+    <p style="margin:0;font-size:13px;color:#666;line-height:1.75;">${nb(e(v('heroBody')))}</p>
+  </td></tr>
+${heroImgRow}
+  <tr><td style="padding:20px 20px 0;" class="mobile-pad">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#FAFAF7;border-radius:8px;border:1px solid #f0f0ea;">
+      <tr><td style="padding:14px 18px;">
+        <p style="margin:0 0 10px;font-size:11px;font-weight:700;color:#999;letter-spacing:.8px;">TODAY'S LETTER</p>
+        <table width="100%" cellpadding="0" cellspacing="0">
+${tocRows.join('\n')}
+          <tr><td></td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </td></tr>
+  <tr><td style="padding:40px 24px 8px;" class="mobile-pad"><p style="margin:0 0 4px;font-size:11px;font-weight:700;color:#ffd200;letter-spacing:1px;">01</p><h2 style="margin:0;font-size:19px;color:#111;font-weight:700;">${e(v('s1t'))}</h2></td></tr>
+  <tr><td style="padding:12px 20px 0;" class="mobile-pad"><p style="margin:0;font-size:13px;color:#555;line-height:1.75;">${nb(e(v('s1d')))}</p></td></tr>
+${spotsHTML}
+  <tr><td style="padding:40px 24px 8px;" class="mobile-pad"><p style="margin:0 0 4px;font-size:11px;font-weight:700;color:#ffd200;letter-spacing:1px;">02</p><h2 style="margin:0;font-size:19px;color:#111;font-weight:700;">${e(v('s2t'))}</h2></td></tr>
+  <tr><td style="padding:16px 20px 0;" class="mobile-pad"><table width="100%" cellpadding="0" cellspacing="0">
+${prodsHTML}
+  </table></td></tr>
+  <tr><td style="padding:40px 24px 8px;" class="mobile-pad"><p style="margin:0 0 4px;font-size:11px;font-weight:700;color:#ffd200;letter-spacing:1px;">03</p><h2 style="margin:0;font-size:19px;color:#111;font-weight:700;">${e(v('s3t'))}</h2></td></tr>
+  <tr><td style="padding:20px 20px 0;" class="mobile-pad"><table width="100%" cellpadding="0" cellspacing="0">
+${tipsHTML}
+  </table></td></tr>
+${bonusHTML}
+${shareHTML}
+  <tr><td height="32" style="font-size:0;line-height:0;">&nbsp;</td></tr>
+  <tr><td height="1" style="background:#eee;font-size:0;line-height:0;">&nbsp;</td></tr>
+  <tr><td style="padding:20px 24px 16px;">
+    <p style="margin:0;font-size:11px;color:#aaa;line-height:1.8;">본 메일은 ${e(v('footerDate'))} 기준 수신 동의를 확인한 후 발송되었습니다. 수신을 원하지 않으시면 <a href="https://pkg.ybtour.co.kr/refuse_email.html?mymail=[$RcptEmail$]&enc=[$Col1$]" target="_blank" style="color:#aaa;text-decoration:underline;">여기</a>를 클릭해 주세요.<br>본 메일은 정보통신법에 의거한 광고성 정보이며, 발신 전용으로 회신이 되지 않습니다.<br>여행경보단계는 유의/자제/제한/금지 4단계로 구분되며, <a href="https://www.0404.go.kr" target="_blank" style="color:#aaa;text-decoration:underline;">외교부 해외안전여행</a> 사이트에서 확인할 수 있습니다.</p>
+  </td></tr>
+  <tr><td style="padding:24px 20px 32px;background:#222;">
+    <p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#ffd200;">YBTOUR</p>
+    <p style="margin:0 0 16px;font-size:11px;color:#888;line-height:1.9;">© YBTOUR. All rights reserved<br>(주) 노랑풍선 | 대표이사 김진국<br>본사 사업자등록번호 104-81-64440 | 통신판매업신고번호 제2008-서울중구-0278<br>대표번호 1544-2288 | 팩스 02-774-3993</p>
+    <p style="margin:0;font-size:12px;"><a href="https://pkg.ybtour.co.kr/refuse_email.html?mymail=[$RcptEmail$]&enc=[$Col1$]" target="_blank" style="color:#888;text-decoration:none;">수신거부</a><span style="color:#555;">&nbsp;&nbsp;|&nbsp;&nbsp;</span><a href="#" style="color:#888;text-decoration:none;">개인정보처리방침</a><span style="color:#555;">&nbsp;&nbsp;|&nbsp;&nbsp;</span><a href="#" style="color:#888;text-decoration:none;">고객센터</a></p>
+  </td></tr>
+</table></td></tr></table>
+</body></html>`;
+}
+
+let rt;
+function render(){clearTimeout(rt);rt=setTimeout(()=>{const html=buildHTML();const frame=document.getElementById('pv');frame.srcdoc=html;frame.onload=()=>{try{frame.style.height=(frame.contentDocument.body.scrollHeight+20)+'px';}catch(ex){frame.style.height='3000px';}};autoSaveDraft();},180);}
+
+let autoSaveTimer;
+function autoSaveDraft(){clearTimeout(autoSaveTimer);autoSaveTimer=setTimeout(()=>{try{localStorage.setItem('yb_draft',JSON.stringify(getState()));const el=document.getElementById('auto-saved');if(el){el.style.display='block';setTimeout(()=>el.style.display='none',2000);}}catch(ex){}},2000);}
+
+function getState(excludeB64=false){const strip=s=>excludeB64?{...s,b64:''}:s;return{heroUrl:v('heroUrl'),heroTitle:v('heroTitle'),heroBody:v('heroBody'),issueDate:v('issueDate'),heroB64:excludeB64?'':_heroB64,tocs:[...tocs],s1t:v('s1t'),s1d:v('s1d'),s2t:v('s2t'),s3t:v('s3t'),s4t:v('s4t'),spots:spots.map(strip),prods:prods.map(p=>excludeB64?{...p,b64:''}:p),tips:[...tips],showBonus:document.getElementById('showBonus')?.checked,showShare:document.getElementById('showShare')?.checked,showShareBtn:document.getElementById('showShareBtn')?.checked,bonusSecTitle:v('bonusSecTitle'),bonusTitle:v('bonusTitle'),bonusDesc:v('bonusDesc'),bonusBtnTxt:v('bonusBtnTxt'),bonusBtnUrl:v('bonusBtnUrl'),shareTxt:v('shareTxt'),shareUrl:v('shareUrl'),footerDate:v('footerDate')};}
+
+function setState(s){if(!s)return;const set=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val||'';};set('heroUrl',s.heroUrl);set('heroTitle',s.heroTitle);set('heroBody',s.heroBody);set('issueDate',s.issueDate);_heroB64=s.heroB64||'';if(_heroB64){const d=document.getElementById('drop-hero');if(d)d.innerHTML=`<img src="${_heroB64}">`;}if(s.tocs)tocs=s.tocs;set('s1t',s.s1t);set('s1d',s.s1d);set('s2t',s.s2t);set('s3t',s.s3t);set('s4t',s.s4t);if(s.spots)spots=s.spots;if(s.prods)prods=s.prods;if(s.tips)tips=s.tips;const sb=document.getElementById('showBonus');if(sb){sb.checked=s.showBonus!==false;toggleBonusSection();}const ss=document.getElementById('showShare');if(ss){ss.checked=s.showShare!==false;toggleShareSection();}const ssb=document.getElementById('showShareBtn');if(ssb)ssb.checked=s.showShareBtn!==false;set('bonusSecTitle',s.bonusSecTitle);set('bonusTitle',s.bonusTitle);set('bonusDesc',s.bonusDesc);set('bonusBtnTxt',s.bonusBtnTxt);set('bonusBtnUrl',s.bonusBtnUrl);set('shareTxt',s.shareTxt);set('shareUrl',s.shareUrl);set('footerDate',s.footerDate);renderToc();renderSpots();renderProds();renderTips();render();}
+
+function openSave(){const d=new Date();document.getElementById('save-name').value=`Vol. - ${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;document.getElementById('modal-save').classList.add('show');setTimeout(()=>document.getElementById('save-name').select(),100);}
+function saveToArchive(){const name=document.getElementById('save-name').value.trim()||'무제 시안';const archives=JSON.parse(localStorage.getItem('yb_archives')||'[]');archives.unshift({id:Date.now(),name,ts:new Date().toISOString(),state:getState()});if(archives.length>30)archives.pop();localStorage.setItem('yb_archives',JSON.stringify(archives));closeModal('modal-save');toast(`"${name}" 저장 완료 ✓`);}
+function openArchive(){const archives=JSON.parse(localStorage.getItem('yb_archives')||'[]');const body=document.getElementById('archive-body');if(!archives.length){body.innerHTML='<p style="font-size:13px;color:#aaa;text-align:center;padding:30px 0;">저장된 시안이 없어요.</p>';}else{body.innerHTML=archives.map(a=>{const d=new Date(a.ts);const ds=`${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;return `<div class="arc-item"><div><div class="arc-title">${e(a.name)}</div><div class="arc-meta">${ds}</div></div><div class="arc-btns"><button class="arc-btn arc-btn-load" onclick="loadArchive(${a.id})">불러오기</button><button class="arc-btn arc-btn-del" onclick="deleteArchive(${a.id})">삭제</button></div></div>`;}).join('');}document.getElementById('modal-archive').classList.add('show');}
+function loadArchive(id){const archives=JSON.parse(localStorage.getItem('yb_archives')||'[]');const item=archives.find(a=>a.id===id);if(!item)return;setState(item.state);closeModal('modal-archive');toast(`"${item.name}" 불러오기 완료 ✓`);}
+function deleteArchive(id){let archives=JSON.parse(localStorage.getItem('yb_archives')||'[]');archives=archives.filter(a=>a.id!==id);localStorage.setItem('yb_archives',JSON.stringify(archives));openArchive();toast('삭제되었습니다');}
+
+function openShare(){try{const b64=btoa(encodeURIComponent(JSON.stringify(getState(true))));document.getElementById('share-url-txt').value=`${location.origin}${location.pathname}#share=${b64}`;document.getElementById('modal-share').classList.add('show');}catch(ex){toast('공유 URL 생성 실패');}}
+function copyShareUrl(){const el=document.getElementById('share-url-txt');el.select();navigator.clipboard.writeText(el.value).then(()=>toast('공유 URL 복사 완료 ✓')).catch(()=>{document.execCommand('copy');toast('공유 URL 복사 완료 ✓');});}
+function loadFromHash(){try{const hash=location.hash;if(!hash.startsWith('#share='))return;const state=JSON.parse(decodeURIComponent(atob(hash.slice(7))));setState(state);toast('공유된 시안을 불러왔어요 ✓');}catch(ex){}}
+
+function openModal(id){document.getElementById(id).classList.add('show');}
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+document.querySelectorAll('.modal-bg').forEach(bg=>{bg.addEventListener('click',ev=>{if(ev.target===bg)bg.classList.remove('show');});});
+
+function downloadHTML(){const html=buildHTML();const blob=new Blob([html],{type:'text/html;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`ybtour_newsletter_${v('issueDate').replace(/\./g,'')}.html`;a.click();toast('HTML 다운로드 완료 ✓');}
+function copyHTML(){const html=buildHTML();navigator.clipboard.writeText(html).then(()=>toast('HTML 복사 완료 ✓')).catch(()=>{const ta=document.createElement('textarea');ta.value=html;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('HTML 복사 완료 ✓');});}
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2400);}
+
+window.onload=()=>{
+  renderToc();renderSpots();renderProds();renderTips();
+  try{const draft=localStorage.getItem('yb_draft');if(draft){setState(JSON.parse(draft));}else{render();}}catch(ex){render();}
+  if(location.hash.startsWith('#share='))loadFromHash();
+  document.querySelectorAll('input,textarea,select').forEach(el=>{el.addEventListener('input',render);el.addEventListener('change',render);});
+};
+</script>
+</body>
+</html>
